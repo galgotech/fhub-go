@@ -21,6 +21,8 @@ type Fhub struct {
 	Name        string
 	Version     string
 	SpecVersion string
+	Constants   map[string]string
+	Env         []string
 	Import      []string
 	Packages    map[string]Package
 	Functions   map[string]Function

@@ -1,9 +1,12 @@
 name: "test"
 specVersion: "1.0"
 version: "v1"
-env:  {
-  name: "value"
+constants:  {
+  "const_name": "test"
 }
+env: [
+  "NAME"
+]
 import: [
   "fhub/internaltest.cue"
 ]

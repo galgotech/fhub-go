@@ -31,6 +31,8 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, "test", fhub.Name)
 		assert.Equal(t, "1.0", fhub.SpecVersion)
 		assert.Equal(t, "v1", fhub.Version)
+		assert.Equal(t, map[string]string{"const_name": "test"}, fhub.Constants)
+		assert.Equal(t, []string{"NAME"}, fhub.Env)
 		assert.Equal(t, []string{"fhub/internaltest.cue"}, fhub.Import)
 
 		for _, pkg := range fhub.Packages {

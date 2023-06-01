@@ -103,6 +103,7 @@ func load(r *gin.Engine, path, pluginPath string) error {
 	env := map[string]string{
 		"DATABASE": os.Getenv("DATABASE"),
 	}
+
 	err = pluginIntialize(env)
 	if err != nil {
 		return err
