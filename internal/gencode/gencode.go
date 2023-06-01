@@ -25,7 +25,7 @@ import (
 
 	"github.com/dave/jennifer/jen"
 
-	"github.com/galgotech/fhub-runtime/model"
+	"github.com/galgotech/fhub-runtime-go/model"
 )
 
 func Exec(root string, rootOutput string) error {

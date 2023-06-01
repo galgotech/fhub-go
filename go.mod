@@ -1,4 +1,4 @@
-module github.com/galgotech/fhub-runtime
+module github.com/galgotech/fhub-runtime-go
 
 go 1.19
 

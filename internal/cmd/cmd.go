@@ -23,8 +23,8 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/galgotech/fhub-runtime/internal/gencode"
-	"github.com/galgotech/fhub-runtime/internal/rest"
+	"github.com/galgotech/fhub-runtime-go/internal/gencode"
+	"github.com/galgotech/fhub-runtime-go/internal/rest"
 )
 
 func Gencode() error {
@@ -33,7 +33,7 @@ func Gencode() error {
 		Usage: "",
 		Authors: []*cli.Author{{
 			Name:  "André Miranda",
-			Email: "andre@galgo.tech",
+			Email: "contact@fhub.dev",
 		}},
 		Action: func(c *cli.Context) (err error) {
 			if c.NArg() != 2 {

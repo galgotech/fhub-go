@@ -29,7 +29,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/galgotech/fhub-runtime/model"
+	"github.com/galgotech/fhub-runtime-go/model"
 )
 
 func Exec(root string) error {

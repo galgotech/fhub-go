@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/galgotech/fhub-runtime/model"
+	"github.com/galgotech/fhub-runtime-go/model"
 )
 
 func Test_gen(t *testing.T) {

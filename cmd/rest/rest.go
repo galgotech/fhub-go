@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/galgotech/fhub-runtime/internal/cmd"
+	"github.com/galgotech/fhub-runtime-go/internal/cmd"
 )
 
 func main() {
