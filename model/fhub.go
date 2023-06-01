@@ -21,6 +21,7 @@ type Fhub struct {
 	Name        string
 	Version     string
 	SpecVersion string
+	Import      []string
 	Packages    map[string]Package
 	Functions   map[string]Function
 }

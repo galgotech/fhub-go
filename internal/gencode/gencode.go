@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 
 	"github.com/dave/jennifer/jen"
+
 	"github.com/galgotech/fhub-runtime/model"
 )
 

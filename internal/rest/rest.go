@@ -27,8 +27,9 @@ import (
 	"path/filepath"
 	"plugin"
 
-	"github.com/galgotech/fhub-runtime/model"
 	"github.com/gin-gonic/gin"
+
+	"github.com/galgotech/fhub-runtime/model"
 )
 
 func Exec(root string) error {

@@ -74,7 +74,7 @@ func unmarshalStart(value cue.Value) (Fhub, error) {
 	fhub := Fhub{}
 
 	outValueOf := reflect.ValueOf(&fhub).Elem()
-	err := unmarshalIt(outValueOf, "fhub", value)
+	err := unmarshalDiscoverType("fhub", outValueOf, value)
 	if err != nil {
 		return fhub, err
 	}
@@ -86,15 +86,31 @@ type Unmarshaler interface {
 	Unmarshal(field string, value cue.Value) (err error)
 }
 
-func unmarshalIt(outValueOf reflect.Value, base string, value cue.Value) (err error) {
-	fmt.Println(outValueOf.Type().Name(), base)
+func unmarshalDiscoverType(namespace string, outValueOf reflect.Value, value cue.Value) (err error) {
+	kind := outValueOf.Type().Kind()
+
+	switch kind {
+	case reflect.String:
+		err = unmarshalValueString(outValueOf, value)
+	case reflect.Struct:
+		err = unmarshalStructIt(namespace, outValueOf, value)
+	case reflect.Map:
+		err = unmarshalMapIt(namespace, outValueOf, value)
+	case reflect.Slice:
+		err = unmarshalListIt(namespace, outValueOf, value)
+	default:
+		panic(fmt.Sprintf("type %q not implemented from key", kind))
+	}
+	return err
+}
+
+func unmarshalStructIt(namespace string, outValueOf reflect.Value, value cue.Value) (err error) {
 	outTypeOf := outValueOf.Type()
 
 	for i := 0; i < outValueOf.NumField(); i++ {
 		fieldValueOf := outValueOf.Field(i)
 		fieldTypeOf := outTypeOf.Field(i)
 
-		kind := fieldTypeOf.Type.Kind()
 		tag := fieldTypeOf.Tag.Get("fhub")
 		unmarshal := fieldTypeOf.Tag.Get("fhub-unmarshal") == "true"
 
@@ -115,16 +131,8 @@ func unmarshalIt(outValueOf reflect.Value, base string, value cue.Value) (err er
 				}
 				err = f.Unmarshal(name, currentValue)
 			} else {
-				switch kind {
-				case reflect.String:
-					err = unmarshalValueString(fieldValueOf, currentValue)
-				case reflect.Struct:
-					err = unmarshalIt(fieldValueOf, name, currentValue)
-				case reflect.Map, reflect.Slice:
-					err = unmarshalValueIt(fieldValueOf, currentValue)
-				default:
-					panic(fmt.Sprintf("type %q not implemented from key %q", kind, name))
-				}
+				namespace = fmt.Sprintf("%s.%s", namespace, name)
+				err = unmarshalDiscoverType(namespace, fieldValueOf, currentValue)
 			}
 			if err != nil {
 				return err
@@ -135,40 +143,51 @@ func unmarshalIt(outValueOf reflect.Value, base string, value cue.Value) (err er
 	return nil
 }
 
-func unmarshalValueIt(outValueOf reflect.Value, value cue.Value) (err error) {
+func unmarshalMapIt(namespace string, outValueOf reflect.Value, value cue.Value) (err error) {
 	fields, err := value.Fields()
 	if err != nil {
 		return err
 	}
 
-	outKindOf := outValueOf.Kind()
-	var valueValueOf reflect.Value
-	switch outKindOf {
-	case reflect.Map:
-		valueValueOf = reflect.MakeMap(outValueOf.Type())
-	case reflect.Slice:
-		valueValueOf = reflect.MakeSlice(outValueOf.Type(), 0, 0)
-	default:
-		panic("invalid kind")
-	}
-
+	valueValueOf := reflect.MakeMap(outValueOf.Type())
 	valueValueTypeOf := valueValueOf.Type().Elem()
 	for fields.Next() {
 		key := fields.Label()
 		val := fields.Value()
 
 		newValueOf := reflect.New(valueValueTypeOf).Elem()
-		err := unmarshalIt(newValueOf, key, val)
+		namespace = fmt.Sprintf("%s.%s", namespace, key)
+		err := unmarshalDiscoverType(namespace, newValueOf, val)
 		if err != nil {
 			return err
 		}
 
-		switch outKindOf {
-		case reflect.Map:
-			valueValueOf.SetMapIndex(reflect.ValueOf(key), newValueOf)
-		case reflect.Slice:
-			valueValueOf = reflect.Append(valueValueOf, newValueOf)
+		valueValueOf.SetMapIndex(reflect.ValueOf(key), newValueOf)
+	}
+
+	outValueOf.Set(valueValueOf)
+	return nil
+}
+
+func unmarshalListIt(namespace string, outValueOf reflect.Value, value cue.Value) (err error) {
+	fields, err := value.List()
+	if err != nil {
+		return err
+	}
+
+	valueValueOf := reflect.MakeSlice(outValueOf.Type(), 0, 0)
+	valueValueTypeOf := valueValueOf.Type().Elem()
+	for fields.Next() {
+		// key := fields.Label()
+		val := fields.Value()
+
+		newValueOf := reflect.New(valueValueTypeOf).Elem()
+		err := unmarshalDiscoverType(namespace, newValueOf, val)
+		if err != nil {
+			return err
 		}
+
+		valueValueOf = reflect.Append(valueValueOf, newValueOf)
 	}
 
 	outValueOf.Set(valueValueOf)

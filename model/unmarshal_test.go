@@ -24,35 +24,76 @@ import (
 )
 
 func TestUnmarshal(t *testing.T) {
-	fhub, err := UnmarshalFile("../devenv/test.cue")
-	assert.NoError(t, err)
+	t.Run("devenv/test.cue", func(t *testing.T) {
+		fhub, err := UnmarshalFile("../devenv/test.cue")
+		assert.NoError(t, err)
 
-	assert.Equal(t, "test", fhub.Name)
-	assert.Equal(t, "1.0", fhub.SpecVersion)
-	assert.Equal(t, "v1", fhub.Version)
+		assert.Equal(t, "test", fhub.Name)
+		assert.Equal(t, "1.0", fhub.SpecVersion)
+		assert.Equal(t, "v1", fhub.Version)
+		assert.Equal(t, []string{"fhub/internaltest.cue"}, fhub.Import)
 
-	for _, pkg := range fhub.Packages {
-		assert.Equal(t, "fhub.dev/test", pkg.Import)
-		assert.Equal(t, "start", pkg.Launch)
-		assert.Equal(t, "https://fhub.dev/test", pkg.Serving.Http.Url)
-	}
+		for _, pkg := range fhub.Packages {
+			assert.Equal(t, "fhub.dev/test", pkg.Import)
+			assert.Equal(t, "start", pkg.Launch)
+			assert.Equal(t, "go:latest", pkg.Build.Image)
+			assert.Equal(t, "https://fhub.dev/test", pkg.Serving.Http.Url)
+		}
 
-	assert.Equal(t, "pkgTest", fhub.Functions["test"].Package)
-	assert.Equal(t, "test", fhub.Functions["test"].Launch)
-	assert.Equal(t, "arg0", fhub.Functions["test"].InputsLabel[0])
-	assert.Equal(t, "arg1", fhub.Functions["test"].InputsLabel[1])
-	assert.Equal(t, "string", fhub.Functions["test"].InputsType[0])
-	assert.Equal(t, "string", fhub.Functions["test"].InputsType[1])
-	assert.Equal(t, "ok", fhub.Functions["test"].OutputsLabel[0])
-	assert.Equal(t, "bool", fhub.Functions["test"].OutputsType[0])
+		assert.Equal(t, "pkgTest", fhub.Functions["test"].Package)
+		assert.Equal(t, "test", fhub.Functions["test"].Launch)
+		assert.Equal(t, "arg0", fhub.Functions["test"].InputsLabel[0])
+		assert.Equal(t, "arg1", fhub.Functions["test"].InputsLabel[1])
+		assert.Equal(t, "string", fhub.Functions["test"].InputsType[0])
+		assert.Equal(t, "string", fhub.Functions["test"].InputsType[1])
+		assert.Equal(t, "ok", fhub.Functions["test"].OutputsLabel[0])
+		assert.Equal(t, "bool", fhub.Functions["test"].OutputsType[0])
 
-	ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1": "test2"}`))
-	assert.True(t, ok)
-	ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
-	assert.True(t, ok)
+		ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1": "test2"}`))
+		assert.True(t, ok)
+		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
+		assert.True(t, ok)
 
-	ok = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg2": "invalid"}`))
-	assert.False(t, ok)
-	ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": "invalid"}`))
-	assert.False(t, ok)
+		ok = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg2": "invalid"}`))
+		assert.False(t, ok)
+		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": "invalid"}`))
+		assert.False(t, ok)
+	})
+
+	t.Run("devenv/test_containerfile.cue", func(t *testing.T) {
+		fhub, err := UnmarshalFile("../devenv/test_containerfile.cue")
+		assert.NoError(t, err)
+
+		assert.Equal(t, "test", fhub.Name)
+		assert.Equal(t, "1.0", fhub.SpecVersion)
+		assert.Equal(t, "v1", fhub.Version)
+		assert.Equal(t, []string{"fhub/internaltest.cue"}, fhub.Import)
+
+		for _, pkg := range fhub.Packages {
+			assert.Equal(t, "fhub.dev/test", pkg.Import)
+			assert.Equal(t, "start", pkg.Launch)
+			assert.Equal(t, "Containerfile", pkg.Build.ContainerFile)
+			assert.Equal(t, "/app", pkg.Build.Source)
+			assert.Equal(t, "https://fhub.dev/test", pkg.Serving.Http.Url)
+		}
+
+		assert.Equal(t, "pkgTest", fhub.Functions["test"].Package)
+		assert.Equal(t, "test", fhub.Functions["test"].Launch)
+		assert.Equal(t, "arg0", fhub.Functions["test"].InputsLabel[0])
+		assert.Equal(t, "arg1", fhub.Functions["test"].InputsLabel[1])
+		assert.Equal(t, "string", fhub.Functions["test"].InputsType[0])
+		assert.Equal(t, "string", fhub.Functions["test"].InputsType[1])
+		assert.Equal(t, "ok", fhub.Functions["test"].OutputsLabel[0])
+		assert.Equal(t, "bool", fhub.Functions["test"].OutputsType[0])
+
+		ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1": "test2"}`))
+		assert.True(t, ok)
+		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
+		assert.True(t, ok)
+
+		ok = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg2": "invalid"}`))
+		assert.False(t, ok)
+		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": "invalid"}`))
+		assert.False(t, ok)
+	})
 }

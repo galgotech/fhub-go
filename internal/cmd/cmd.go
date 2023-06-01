@@ -21,9 +21,10 @@ import (
 	"errors"
 	"os"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/galgotech/fhub-runtime/internal/gencode"
 	"github.com/galgotech/fhub-runtime/internal/rest"
-	"github.com/urfave/cli/v2"
 )
 
 func Gencode() error {
