@@ -20,7 +20,6 @@ package gencode
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -30,53 +29,35 @@ import (
 )
 
 func Exec(root string, rootOutput string) error {
-	rootFhub := filepath.Join(root, "fhub")
-	err := filepath.Walk(rootFhub, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	fhubFile := filepath.Join(root, "fhub.cue")
 
-		if info.IsDir() {
-			return nil
-		}
-
-		filename := filepath.Base(path)
-		if matched, err := filepath.Match("*.cue", filename); err != nil {
-			return err
-		} else if matched {
-			code, err := gen(path)
-			if err != nil {
-				return err
-			}
-
-			// name := filename[:len(filename)-len(filepath.Ext(filename))]
-			pathGen := filepath.Join(rootOutput, "main.go")
-			err = os.WriteFile(pathGen, code, 0760)
-			if err != nil {
-				return err
-			}
-
-			pathGen = filepath.Join(rootOutput, filename)
-			_, err = copy(path, pathGen)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}
-		return nil
-	})
-
-	return err
-}
-
-func gen(path string) ([]byte, error) {
-	fhub, err := model.UnmarshalFile(path)
+	_, err := os.Stat(fhubFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
+	fhub, err := model.UnmarshalFile(fhubFile)
+	if err != nil {
+		return err
+	}
+
+	code, err := gen(fhub)
+	if err != nil {
+		return err
+	}
+
+	pathGen := filepath.Join(rootOutput, "main.go")
+	err = os.WriteFile(pathGen, code, 0760)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func gen(fhub model.Fhub) ([]byte, error) {
 	f := jen.NewFile("main")
+	f.PackagePrefix = "pkg"
 
 	for label, pkg := range fhub.Packages {
 		if pkg.HasLaunch() {
@@ -104,8 +85,6 @@ func gen(path string) ([]byte, error) {
 
 			f.ImportAlias(pkg.Import, fmt.Sprintf("launch%s", label))
 			f.Var().Id(label).Id(interfaceName)
-		} else {
-			f.ImportAlias(pkg.Import, label)
 		}
 	}
 
@@ -120,16 +99,6 @@ func gen(path string) ([]byte, error) {
 				}
 			}
 			g.Add(jen.Return(jen.Nil()))
-			// f.Var().Id(label).Op("=").Qual(pkg.Package, pkg.Launch).Call()
-
-			// if fhub.Initialize != nil {
-			// 	function := fhub.Initialize
-			// 	g.Add(jen.Id("err").Op(":=").Id("f").Dot(function.Launch).Call(jen.Id("env")))
-			// 	g.Add(jen.Return(jen.Id("err")))
-			// } else {
-			// 	g.Add(jen.Return(jen.Nil()))
-			// }
-
 		},
 	)
 
@@ -137,8 +106,8 @@ func gen(path string) ([]byte, error) {
 		jen.Id("function").String(), jen.Id("input").Map(jen.String()).Any(),
 	).Map(jen.String()).Any().Block(
 		jen.Switch(jen.Id("function").BlockFunc(func(g *jen.Group) {
-			for _, function := range fhub.Functions {
-				g.Add(jen.Case(jen.Lit(function.Label)).Block(
+			for label, function := range fhub.Functions {
+				g.Add(jen.Case(jen.Lit(label)).Block(
 					jen.Return(jen.Id("f").Dot(function.Launch).Call(jen.Id("input"))),
 				))
 			}
@@ -147,18 +116,6 @@ func gen(path string) ([]byte, error) {
 	)
 
 	f.Type().Id("functions").Struct()
-
-	// if fhub.Initialize != nil {
-	// 	function := fhub.Initialize
-	// 	f.Func().Params(
-	// 		jen.Id("f").Id("*functions"),
-	// 	).Id(function.Launch).Params(
-	// 		jen.Id("env").Map(jen.String()).String(),
-	// 	).Id("error").Block(
-	// 		jen.Id("err").Op(":=").Qual(fhub.Packages[function.Package].Package, function.Launch).Call(jen.Id("env")),
-	// 		jen.Return(jen.Id("err")),
-	// 	)
-	// }
 
 	for _, function := range fhub.Functions {
 		functionArgs := make([]jen.Code, len(function.InputsLabel))
@@ -180,11 +137,25 @@ func gen(path string) ([]byte, error) {
 		).Id(function.Launch).Params(
 			jen.Id("input").Map(jen.String()).Any(),
 		).Map(jen.String()).Any().Block(
-			jen.ListFunc(func(g *jen.Group) {
-				for _, id := range function.OutputsLabel {
-					g.Add(jen.Id(id))
+			func() jen.Code {
+				v := jen.ListFunc(func(g *jen.Group) {
+					for _, id := range function.OutputsLabel {
+						g.Add(jen.Id(id))
+					}
+				}).Op(":=")
+
+				if pkg, ok := fhub.Packages[function.Package]; ok {
+					if pkg.HasLaunch() {
+						v = v.Id(function.Package).Dot(function.Launch)
+					} else {
+						fmt.Println(pkg.Import, function.Launch)
+						v = v.Qual(pkg.Import, function.Launch)
+					}
 				}
-			}).Op(":=").Id(function.Package).Dot(function.Launch).Call(functionArgs...),
+
+				v = v.Call(functionArgs...)
+				return v
+			}(),
 			jen.Id("output").Op(":=").Map(jen.String()).Any().Values(jen.DictFunc(
 				func(dict jen.Dict) {
 					for _, id := range function.OutputsLabel {
@@ -197,34 +168,9 @@ func gen(path string) ([]byte, error) {
 	}
 
 	buf := &bytes.Buffer{}
-	err = f.Render(buf)
+	err := f.Render(buf)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
-}
-
-func copy(src, dst string) (int64, error) {
-	sourceFileStat, err := os.Stat(src)
-	if err != nil {
-		return 0, err
-	}
-
-	if !sourceFileStat.Mode().IsRegular() {
-		return 0, fmt.Errorf("%s is not a regular file", src)
-	}
-
-	source, err := os.Open(src)
-	if err != nil {
-		return 0, err
-	}
-	defer source.Close()
-
-	destination, err := os.Create(dst)
-	if err != nil {
-		return 0, err
-	}
-	defer destination.Close()
-	nBytes, err := io.Copy(destination, source)
-	return nBytes, err
 }
