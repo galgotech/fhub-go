@@ -37,6 +37,10 @@ type Http struct {
 }
 
 type Build struct {
+	Container Container
+}
+
+type Container struct {
 	Image         string
 	ContainerFile string
 	Source        string

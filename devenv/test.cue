@@ -12,7 +12,9 @@ packages: {
     import: "fhub.dev/test"
     launch: "start"
     build: {
-      image: "go:latest"
+      container: {
+        image: "go:latest"
+      }
     }
     serving: {
       http: {

@@ -12,8 +12,10 @@ packages: {
     import: "fhub.dev/test"
     launch: "start"
     build: {
-      containerFile: "Containerfile"
-      source: "/app"
+      container: {
+        containerFile: "Containerfile"
+        source: "/app"
+      }
     }
     serving: {
       http: {

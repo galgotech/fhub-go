@@ -36,7 +36,7 @@ func TestUnmarshal(t *testing.T) {
 		for _, pkg := range fhub.Packages {
 			assert.Equal(t, "fhub.dev/test", pkg.Import)
 			assert.Equal(t, "start", pkg.Launch)
-			assert.Equal(t, "go:latest", pkg.Build.Image)
+			assert.Equal(t, "go:latest", pkg.Build.Container.Image)
 			assert.Equal(t, "https://fhub.dev/test", pkg.Serving.Http.Url)
 		}
 
@@ -72,8 +72,8 @@ func TestUnmarshal(t *testing.T) {
 		for _, pkg := range fhub.Packages {
 			assert.Equal(t, "fhub.dev/test", pkg.Import)
 			assert.Equal(t, "start", pkg.Launch)
-			assert.Equal(t, "Containerfile", pkg.Build.ContainerFile)
-			assert.Equal(t, "/app", pkg.Build.Source)
+			assert.Equal(t, "Containerfile", pkg.Build.Container.ContainerFile)
+			assert.Equal(t, "/app", pkg.Build.Container.Source)
 			assert.Equal(t, "https://fhub.dev/test", pkg.Serving.Http.Url)
 		}
 
