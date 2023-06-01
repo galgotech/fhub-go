@@ -88,7 +88,7 @@ func load(r *gin.Engine, path, pluginPath string) error {
 	if err != nil {
 		return err
 	}
-	pluginIntialize, ok := pluginIntializeInterface.(func(map[string]string) error)
+	pluginIntialize, ok := pluginIntializeInterface.(func(map[string]string, map[string]string) error)
 	if !ok {
 		fmt.Printf("%V\n", pluginIntializeInterface)
 		return errors.New("invalid interface initialize")
@@ -100,11 +100,14 @@ func load(r *gin.Engine, path, pluginPath string) error {
 	}
 
 	// TODO: Check the security, in the same runtime, start different clients
-	env := map[string]string{
-		"DATABASE": os.Getenv("DATABASE"),
+	env := map[string]string{}
+	for _, name := range fhub.Env {
+		if value, ok := os.LookupEnv(name); ok {
+			env[name] = value
+		}
 	}
 
-	err = pluginIntialize(env)
+	err = pluginIntialize(env, fhub.Constants)
 	if err != nil {
 		return err
 	}

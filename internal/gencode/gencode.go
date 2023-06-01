@@ -90,7 +90,7 @@ func gen(fhub model.Fhub) ([]byte, error) {
 
 	f.Var().Id("f").Op("=").Id("functions").Values()
 
-	f.Func().Id("Initialize").Params(jen.Id("env").Map(jen.String()).String()).Id("error").BlockFunc(
+	f.Func().Id("Initialize").Params(jen.Id("env").Map(jen.String()).String(), jen.Id("constants").Map(jen.String()).String()).Id("error").BlockFunc(
 		func(g *jen.Group) {
 			for label, pkg := range fhub.Packages {
 				if pkg.HasLaunch() {
@@ -148,7 +148,6 @@ func gen(fhub model.Fhub) ([]byte, error) {
 					if pkg.HasLaunch() {
 						v = v.Id(function.Package).Dot(function.Launch)
 					} else {
-						fmt.Println(pkg.Import, function.Launch)
 						v = v.Qual(pkg.Import, function.Launch)
 					}
 				}

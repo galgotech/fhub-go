@@ -3,8 +3,9 @@ package gencode
 import (
 	"testing"
 
-	"github.com/galgotech/fhub-runtime/model"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/galgotech/fhub-runtime/model"
 )
 
 func Test_gen(t *testing.T) {
@@ -45,7 +46,7 @@ import pkg_test "fhub.dev/test"
 
 var f = functions{}
 
-func Initialize(env map[string]string) error {
+func Initialize(env map[string]string, constants map[string]string) error {
 	return nil
 }
 func Exec(function string, input map[string]any) map[string]any {
@@ -108,7 +109,7 @@ type interfacetest interface {
 var test interfacetest
 var f = functions{}
 
-func Initialize(env map[string]string) error {
+func Initialize(env map[string]string, constants map[string]string) error {
 	test = (interfacetest)(pkg_launchtest.Start(env))
 	return nil
 }
