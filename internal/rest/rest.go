@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"plugin"
 
@@ -34,28 +35,10 @@ import (
 
 func Exec(root string) error {
 	r := gin.Default()
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
 
-		if info.IsDir() {
-			return nil
-		}
-
-		filename := filepath.Base(path)
-		if matched, err := filepath.Match("*.cue", filename); err != nil {
-			return err
-		} else if matched {
-			name := filename[:len(filename)-len(filepath.Ext(filename))]
-			pluginPath := filepath.Join(root, fmt.Sprintf("%s.so", name))
-			err := load(r, path, pluginPath)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	fhubPath := path.Join(root, "fhub.cue")
+	pluginPath := filepath.Join(root, "plugin.so")
+	err := load(r, fhubPath, pluginPath)
 	if err != nil {
 		return err
 	}
@@ -76,17 +59,17 @@ func load(r *gin.Engine, path, pluginPath string) error {
 
 	p, err := plugin.Open(pluginPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("load plugin: %w", err)
 	}
 
 	pluginIntializeInterface, err := p.Lookup("Initialize")
 	if err != nil {
-		return err
+		return fmt.Errorf("plugin lookup Initialize: %w", err)
 	}
 
 	pluginExecInterface, err := p.Lookup("Exec")
 	if err != nil {
-		return err
+		return fmt.Errorf("plugin lookup Exec: %w", err)
 	}
 	pluginIntialize, ok := pluginIntializeInterface.(func(map[string]string, map[string]string) error)
 	if !ok {
