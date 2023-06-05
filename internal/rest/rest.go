@@ -94,17 +94,20 @@ func load(r *gin.Engine, path, pluginPath string) error {
 	if err != nil {
 		return err
 	}
-	for _, function := range fhub.Functions {
-		func(function model.Function) {
-			path := fmt.Sprintf("%s/%s/%s", fhub.Version, fhub.Name, function.Label)
+	for label, function := range fhub.Functions {
+		func(label string, function model.Function) {
+			path := fmt.Sprintf("%s/%s/%s", fhub.Version, fhub.Name, label)
 			r.POST(path, func(c *gin.Context) {
+
 				inputJson, err := ioutil.ReadAll(c.Request.Body)
 				if err != nil {
+					fmt.Printf("fail read json input: %s\n", err)
 					c.JSON(http.StatusInternalServerError, nil)
 					return
 				}
 
 				if ok := function.ValidateInput(inputJson); !ok {
+					fmt.Printf("fail validate input\n")
 					c.JSON(http.StatusBadRequest, nil)
 					return
 				}
@@ -112,30 +115,34 @@ func load(r *gin.Engine, path, pluginPath string) error {
 				input := map[string]any{}
 				err = json.Unmarshal(inputJson, &input)
 				if err != nil {
+					fmt.Printf("fail unmarshal input: %s\n", err)
 					c.JSON(http.StatusInternalServerError, nil)
 					return
 				}
 
-				output := pluginExec(function.Label, input)
+				output := pluginExec(label, input)
 				if output == nil {
+					fmt.Printf("fail pluginExec\n")
 					c.JSON(http.StatusInternalServerError, nil)
 					return
 				}
 
 				outputJson, err := json.Marshal(output)
 				if err != nil {
+					fmt.Printf("fail marshal input: %s\n", err)
 					c.JSON(http.StatusBadRequest, nil)
 					return
 				}
 
 				if ok := function.ValidateOutput(outputJson); !ok {
+					fmt.Printf("fail validate output\n")
 					c.JSON(http.StatusBadRequest, nil)
 					return
 				}
 
 				c.JSON(http.StatusOK, output)
 			})
-		}(function)
+		}(label, function)
 	}
 
 	return nil

@@ -30,7 +30,6 @@ type Function struct {
 	inputValue  cue.Value `fhub:"input" fhub-unmarshal:"true"`
 	outputValue cue.Value `fhub:"output" fhub-unmarshal:"true"`
 
-	Label   string
 	Package string
 	Launch  string
 
