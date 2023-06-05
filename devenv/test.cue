@@ -15,8 +15,8 @@ packages: {
     import: "fhub.dev/test"
     launch: "start"
     build: {
-      container: {
-        image: "go:latest"
+      local: {
+        source: "./"
       }
     }
     serving: {

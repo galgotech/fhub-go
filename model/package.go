@@ -37,7 +37,12 @@ type Http struct {
 }
 
 type Build struct {
+	Local     Local
 	Container Container
+}
+
+type Local struct {
+	Source string
 }
 
 type Container struct {
