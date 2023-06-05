@@ -95,15 +95,18 @@ func gen(fhub model.Fhub) ([]byte, error) {
 		jen.Id("constants").Map(jen.String()).String(),
 	).Id("error").BlockFunc(
 		func(g *jen.Group) {
+			g.Var().Add(jen.Id("err"), jen.Error())
 			for label, pkg := range fhub.Packages {
 				if pkg.HasLaunch() {
-					interfaceName := fmt.Sprintf("interface%s", label)
 					g.Add(
-						jen.Id(label).Op("=").Parens(jen.Id(interfaceName)).Parens(
-							jen.Qual(pkg.Import, pkg.Launch).Call(
-								jen.Id("env"),
-								jen.Id("constants"),
-							),
+						jen.List(jen.Id(label), jen.Id("err")).Op("=").Qual(pkg.Import, pkg.Launch).Call(
+							jen.Id("env"),
+							jen.Id("constants"),
+						),
+					)
+					g.Add(
+						jen.If(jen.Id("err").Op("!=").Nil()).Block(
+							jen.Return(jen.Id("err")),
 						),
 					)
 				}

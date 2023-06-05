@@ -10,7 +10,7 @@ import (
 
 func Test_gen(t *testing.T) {
 
-	t.Run("use package", func(t *testing.T) {
+	t.Run("not use initialize", func(t *testing.T) {
 		fhub := model.Fhub{
 			Packages: map[string]model.Package{
 				"test": {
@@ -47,6 +47,7 @@ import pkg_test "fhub.dev/test"
 var f = functions{}
 
 func Initialize(env map[string]string, constants map[string]string) error {
+	var err error
 	return nil
 }
 func Exec(function string, input map[string]any) map[string]any {
@@ -67,7 +68,7 @@ func (f *functions) function_test(input map[string]any) map[string]any {
 `, string(code))
 	})
 
-	t.Run("use package", func(t *testing.T) {
+	t.Run("use initialize", func(t *testing.T) {
 		fhub := model.Fhub{
 			Packages: map[string]model.Package{
 				"test": {
@@ -110,7 +111,11 @@ var test interfacetest
 var f = functions{}
 
 func Initialize(env map[string]string, constants map[string]string) error {
-	test = (interfacetest)(pkg_launchtest.Start(env))
+	var err error
+	test, err = pkg_launchtest.Start(env, constants)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 func Exec(function string, input map[string]any) map[string]any {
