@@ -4,27 +4,19 @@ version: "v1"
 import: [
   "fhub/internaltest.cue"
 ]
-packages: {
-	pkgTest: {
-    import: "fhub.dev/test"
-    launch: "start"
-    build: {
-      container: {
-        containerFile: "Containerfile"
-        source: "/app"
-      }
-    }
-    serving: {
-      http: {
-        url: "https://fhub.dev/test"
-      }
-    }
+build: {
+  container: {
+    containerFile: "Containerfile"
+    source: "/app"
+  }
+}
+serving: {
+  http: {
+    url: "https://fhub.dev/test"
   }
 }
 functions: {
   test: {
-    package: "pkgTest"
-    launch: "test"
     input: {
       arg0: string
       arg1: string

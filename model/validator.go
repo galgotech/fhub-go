@@ -15,20 +15,30 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with fhub-runtime-go. If not, see <https://www.gnu.org/licenses/>.
 
-package main
+package model
 
 import (
-	"fmt"
-	"os"
+	"context"
 
-	"github.com/galgotech/fhub-runtime-go/internal/cmd"
+	"github.com/go-playground/validator/v10"
 )
 
-func main() {
-	err := cmd.Gencode()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	os.Exit(0)
+type ValidatorCtxValueKey string
+
+const ValidatorCtxValue ValidatorCtxValueKey = "value"
+
+func Validator(model FHub) error {
+	validate := validator.New()
+
+	validate.RegisterStructValidationCtx(fhubStructLevel, FHub{})
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, ValidatorCtxValue, model)
+	err := validate.StructCtx(ctx, model)
+
+	return err
+}
+
+func fhubStructLevel(ctx context.Context, sl validator.StructLevel) {
+
 }

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
@@ -30,13 +31,10 @@ type Function struct {
 	inputValue  cue.Value `fhub:"input" fhub-unmarshal:"true"`
 	outputValue cue.Value `fhub:"output" fhub-unmarshal:"true"`
 
-	Package string
-	Launch  string
-
-	InputsLabel  []string
-	InputsType   []string
-	OutputsLabel []string
-	OutputsType  []string
+	InputsLabel  []string       `validate:"min=1"`
+	InputsType   []reflect.Kind `validate:"min=1"`
+	OutputsLabel []string       `validate:"min=1"`
+	OutputsType  []reflect.Kind `validate:"min=1"`
 }
 
 func (f *Function) Unmarshal(field string, value cue.Value) (err error) {
@@ -89,14 +87,14 @@ func (f *Function) validate(data []byte, value cue.Value) bool {
 	return err == nil
 }
 
-func type_struct(value cue.Value) ([]string, []string, error) {
+func type_struct(value cue.Value) ([]string, []reflect.Kind, error) {
 	fields, err := value.Fields()
 	if err != nil {
 		return nil, nil, err
 	}
 
 	labels := []string{}
-	values := []string{}
+	values := []reflect.Kind{}
 	for fields.Next() {
 		fieldValue := fields.Value()
 		label := fields.Label()
@@ -104,11 +102,11 @@ func type_struct(value cue.Value) ([]string, []string, error) {
 
 		switch fieldValue.IncompleteKind() {
 		case cue.StringKind:
-			values = append(values, "string")
+			values = append(values, reflect.String)
 		case cue.IntKind:
-			values = append(values, "int")
+			values = append(values, reflect.Int)
 		case cue.BoolKind:
-			values = append(values, "bool")
+			values = append(values, reflect.Bool)
 		default:
 			return nil, nil, fmt.Errorf("invalid type input %s", fieldValue.IncompleteKind())
 		}

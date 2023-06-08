@@ -11,15 +11,15 @@ include .bingo/Variables.mk
 run: $(BRA) ## Build and run web server on filesystem changes.
 	$(BRA) run
 
-build: build-server build-gencode ## build
+build: build-server ## build
 
-build-server: ## Build FHUB server.
+build-server: ## Build FHUB.
 	@echo "build server"
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 $(GO) build -o ./bin/fhub-rest ./cmd/rest
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 $(GO) build -o ./bin/fhub-runtime-go ./cmd
 
-build-gencode: ## Build FHUB gencode.
-	@echo "build gencode"
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GO) build -o ./bin/fhub-gencode ./cmd/gencode
+build-code-test: ## Code test
+	@echo "build code test"
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GO) build -o ./bin/code-test devenv/code/cmd/main.go
 
 
 ##@ Helpers

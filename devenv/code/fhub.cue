@@ -21,15 +21,12 @@ serving: {
   }
 }
 functions: {
-  test: {
-    package: "pkgTest"
-    launch: "FuncTest"
+  FuncTest: {
     input: {
-      arg0: string
-      arg1: string
+      a: string
     }
     output: {
-      ok: bool
+      response: string
     }
   }
 }

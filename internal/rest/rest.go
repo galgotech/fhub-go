@@ -19,17 +19,14 @@ package rest
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path"
-	"path/filepath"
-	"plugin"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/galgotech/fhub-runtime-go/internal/plugin"
 	"github.com/galgotech/fhub-runtime-go/model"
 )
 
@@ -37,8 +34,15 @@ func Exec(root string) error {
 	r := gin.Default()
 
 	fhubPath := path.Join(root, "fhub.cue")
-	pluginPath := filepath.Join(root, "plugin.so")
-	err := load(r, fhubPath, pluginPath)
+	// pluginPath := filepath.Join(root, "plugin.so")
+
+	client, p, err := plugin.Client("fhub", "./bin/code-test")
+	if err != nil {
+		return err
+	}
+	defer client.Kill()
+
+	err = load(r, fhubPath, p)
 	if err != nil {
 		return err
 	}
@@ -51,54 +55,23 @@ func Exec(root string) error {
 	return nil
 }
 
-func load(r *gin.Engine, path, pluginPath string) error {
+func load(r *gin.Engine, path string, p plugin.FHub) error {
 	fhub, err := model.UnmarshalFile(path)
 	if err != nil {
 		return err
 	}
 
-	p, err := plugin.Open(pluginPath)
-	if err != nil {
-		return fmt.Errorf("load plugin: %w", err)
-	}
+	// env := map[string]string{}
+	// for _, name := range fhub.Env {
+	// 	if value, ok := os.LookupEnv(name); ok {
+	// 		env[name] = value
+	// 	}
+	// }
 
-	pluginIntializeInterface, err := p.Lookup("Initialize")
-	if err != nil {
-		return fmt.Errorf("plugin lookup Initialize: %w", err)
-	}
-
-	pluginExecInterface, err := p.Lookup("Exec")
-	if err != nil {
-		return fmt.Errorf("plugin lookup Exec: %w", err)
-	}
-	pluginIntialize, ok := pluginIntializeInterface.(func(map[string]string, map[string]string) error)
-	if !ok {
-		fmt.Printf("%V\n", pluginIntializeInterface)
-		return errors.New("invalid interface initialize")
-	}
-	pluginExec, ok := pluginExecInterface.(func(string, map[string]any) map[string]any)
-	if !ok {
-		fmt.Printf("%V\n", pluginExecInterface)
-		return errors.New("invalid interface exec")
-	}
-
-	// TODO: Check the security, in the same runtime, start different clients
-	env := map[string]string{}
-	for _, name := range fhub.Env {
-		if value, ok := os.LookupEnv(name); ok {
-			env[name] = value
-		}
-	}
-
-	err = pluginIntialize(env, fhub.Constants)
-	if err != nil {
-		return err
-	}
 	for label, function := range fhub.Functions {
 		func(label string, function model.Function) {
 			path := fmt.Sprintf("%s/%s/%s", fhub.Version, fhub.Name, label)
 			r.POST(path, func(c *gin.Context) {
-
 				inputJson, err := ioutil.ReadAll(c.Request.Body)
 				if err != nil {
 					fmt.Printf("fail read json input: %s\n", err)
@@ -120,7 +93,12 @@ func load(r *gin.Engine, path, pluginPath string) error {
 					return
 				}
 
-				output := pluginExec(label, input)
+				output, err := p.Exec(label, input)
+				if err != nil {
+					fmt.Printf("fail pluginExec: %s\n", err)
+					c.JSON(http.StatusInternalServerError, nil)
+					return
+				}
 				if output == nil {
 					fmt.Printf("fail pluginExec\n")
 					c.JSON(http.StatusInternalServerError, nil)

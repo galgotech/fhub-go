@@ -27,7 +27,7 @@ import (
 func main() {
 	err := cmd.Rest()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Print(err)
 		os.Exit(1)
 	}
 	os.Exit(0)
