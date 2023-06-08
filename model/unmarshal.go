@@ -30,48 +30,48 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 )
 
-func UnmarshalFile(path string) (Fhub, error) {
+func UnmarshalFile(path string) (FHub, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return Fhub{}, err
+		return FHub{}, err
 	}
 	return UnmarshalBytes(data)
 }
 
-func UnmarshalHttp(url string) (Fhub, error) {
+func UnmarshalHttp(url string) (FHub, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return Fhub{}, err
+		return FHub{}, err
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return Fhub{}, err
+		return FHub{}, err
 	}
 	return UnmarshalBytes(body)
 }
 
-func UnmarshalBytes(data []byte) (Fhub, error) {
+func UnmarshalString(data string) (FHub, error) {
+	return UnmarshalBytes([]byte(data))
+}
+
+func UnmarshalBytes(data []byte) (FHub, error) {
 	ctx := cuecontext.New()
 	value := ctx.CompileBytes(data)
 	fhub, err := unmarshalStart(value)
 	if err != nil {
-		return Fhub{}, err
+		return FHub{}, err
 	}
-	return fhub, nil
-}
 
-func UnmarshalString(data string) (Fhub, error) {
-	ctx := cuecontext.New()
-	value := ctx.CompileString(data)
-	fhub, err := unmarshalStart(value)
+	err = Validator(fhub)
 	if err != nil {
-		return Fhub{}, err
+		return FHub{}, err
 	}
+
 	return fhub, nil
 }
 
-func unmarshalStart(value cue.Value) (Fhub, error) {
-	fhub := Fhub{}
+func unmarshalStart(value cue.Value) (FHub, error) {
+	fhub := FHub{}
 
 	outValueOf := reflect.ValueOf(&fhub).Elem()
 	err := unmarshalDiscoverType("fhub", outValueOf, value)
@@ -98,9 +98,13 @@ func unmarshalDiscoverType(namespace string, outValueOf reflect.Value, value cue
 		err = unmarshalMapIt(namespace, outValueOf, value)
 	case reflect.Slice:
 		err = unmarshalListIt(namespace, outValueOf, value)
+	case reflect.Ptr:
+		outValueOf.Set(reflect.New(outValueOf.Type().Elem()))
+		err = unmarshalDiscoverType(namespace, outValueOf.Elem(), value)
 	default:
 		panic(fmt.Sprintf("type %q not implemented from key", kind))
 	}
+
 	return err
 }
 

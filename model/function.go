@@ -30,13 +30,13 @@ type Function struct {
 	inputValue  cue.Value `fhub:"input" fhub-unmarshal:"true"`
 	outputValue cue.Value `fhub:"output" fhub-unmarshal:"true"`
 
-	Package string
-	Launch  string
+	Package string `validate:"required"`
+	Launch  string `validate:"required"`
 
-	InputsLabel  []string
-	InputsType   []string
-	OutputsLabel []string
-	OutputsType  []string
+	InputsLabel  []string `validate:"min=1"`
+	InputsType   []string `validate:"min=1"`
+	OutputsLabel []string `validate:"min=1"`
+	OutputsType  []string `validate:"min=1"`
 }
 
 func (f *Function) Unmarshal(field string, value cue.Value) (err error) {

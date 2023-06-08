@@ -55,7 +55,7 @@ func Exec(root string, rootOutput string) error {
 	return nil
 }
 
-func gen(fhub model.Fhub) ([]byte, error) {
+func gen(fhub model.FHub) ([]byte, error) {
 	f := jen.NewFile("main")
 	f.PackagePrefix = "pkg"
 

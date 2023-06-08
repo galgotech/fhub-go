@@ -11,7 +11,7 @@ import (
 func Test_gen(t *testing.T) {
 
 	t.Run("not use initialize", func(t *testing.T) {
-		fhub := model.Fhub{
+		fhub := model.FHub{
 			Packages: map[string]model.Package{
 				"test": {
 					Import: "fhub.dev/test",
@@ -69,7 +69,7 @@ func (f *functions) function_test(input map[string]any) map[string]any {
 	})
 
 	t.Run("use initialize", func(t *testing.T) {
-		fhub := model.Fhub{
+		fhub := model.FHub{
 			Packages: map[string]model.Package{
 				"test": {
 					Import: "fhub.dev/test",
