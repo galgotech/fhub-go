@@ -27,7 +27,8 @@ type FHub struct {
 	Constants   map[string]string
 	Env         []string
 	Import      []string
-	Packages    map[string]Package  `validate:"min=1,dive"`
+	Build       Build
+	Serving     Serving
 	Functions   map[string]Function `validate:"min=1,dive"`
 }
 
@@ -51,27 +52,9 @@ func (in *FHub) DeepCopy() (out *FHub) {
 		out.Functions[key] = function
 	}
 
-	out.Packages = make(map[string]Package, len(in.Packages))
-	for key, pkg := range in.Packages {
-		out.Packages[key] = pkg
-	}
+	out.Build = *in.Build.DeepCopy()
+	out.Serving = *in.Serving.DeepCopy()
 
-	return
-}
-
-type Package struct {
-	Import  string `validate:"required"`
-	Launch  string
-	Build   Build
-	Serving Serving
-}
-
-func (p *Package) HasLaunch() bool {
-	return p.Launch != ""
-}
-
-func (in *Package) DeepCopy() (out *Package) {
-	*out = *in
 	return
 }
 

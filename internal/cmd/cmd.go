@@ -23,32 +23,8 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/galgotech/fhub-runtime-go/internal/gencode"
 	"github.com/galgotech/fhub-runtime-go/internal/rest"
 )
-
-func Gencode() error {
-	app := &cli.App{
-		Name:  "fhub-gencode",
-		Usage: "",
-		Authors: []*cli.Author{{
-			Name:  "André Miranda",
-			Email: "contact@fhub.dev",
-		}},
-		Action: func(c *cli.Context) (err error) {
-			if c.NArg() != 2 {
-				return errors.New("without schema")
-			}
-			return gencode.Exec(c.Args().Get(0), c.Args().Get(1))
-		},
-	}
-
-	if err := app.Run(os.Args); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func Rest() error {
 	app := &cli.App{

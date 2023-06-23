@@ -18,6 +18,7 @@
 package model
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,21 +36,15 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, []string{"NAME"}, fhub.Env)
 		assert.Equal(t, []string{"fhub/internaltest.cue"}, fhub.Import)
 
-		for _, pkg := range fhub.Packages {
-			assert.Equal(t, "fhub.dev/test", pkg.Import)
-			assert.Equal(t, "start", pkg.Launch)
-			assert.Equal(t, "./", pkg.Build.Local.Source)
-			assert.Equal(t, "https://fhub.dev/test", pkg.Serving.Http.Url)
-		}
+		assert.Equal(t, "./", fhub.Build.Local.Source)
+		assert.Equal(t, "https://fhub.dev/test", fhub.Serving.Http.Url)
 
-		assert.Equal(t, "pkgTest", fhub.Functions["test"].Package)
-		assert.Equal(t, "test", fhub.Functions["test"].Launch)
 		assert.Equal(t, "arg0", fhub.Functions["test"].InputsLabel[0])
 		assert.Equal(t, "arg1", fhub.Functions["test"].InputsLabel[1])
-		assert.Equal(t, "string", fhub.Functions["test"].InputsType[0])
-		assert.Equal(t, "string", fhub.Functions["test"].InputsType[1])
+		assert.Equal(t, reflect.String, fhub.Functions["test"].InputsType[0])
+		assert.Equal(t, reflect.String, fhub.Functions["test"].InputsType[1])
 		assert.Equal(t, "ok", fhub.Functions["test"].OutputsLabel[0])
-		assert.Equal(t, "bool", fhub.Functions["test"].OutputsType[0])
+		assert.Equal(t, reflect.Bool, fhub.Functions["test"].OutputsType[0])
 
 		ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1": "test2"}`))
 		assert.True(t, ok)
@@ -71,22 +66,16 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, "v1", fhub.Version)
 		assert.Equal(t, []string{"fhub/internaltest.cue"}, fhub.Import)
 
-		for _, pkg := range fhub.Packages {
-			assert.Equal(t, "fhub.dev/test", pkg.Import)
-			assert.Equal(t, "start", pkg.Launch)
-			assert.Equal(t, "Containerfile", pkg.Build.Container.ContainerFile)
-			assert.Equal(t, "/app", pkg.Build.Container.Source)
-			assert.Equal(t, "https://fhub.dev/test", pkg.Serving.Http.Url)
-		}
+		assert.Equal(t, "Containerfile", fhub.Build.Container.ContainerFile)
+		assert.Equal(t, "/app", fhub.Build.Container.Source)
+		assert.Equal(t, "https://fhub.dev/test", fhub.Serving.Http.Url)
 
-		assert.Equal(t, "pkgTest", fhub.Functions["test"].Package)
-		assert.Equal(t, "test", fhub.Functions["test"].Launch)
 		assert.Equal(t, "arg0", fhub.Functions["test"].InputsLabel[0])
 		assert.Equal(t, "arg1", fhub.Functions["test"].InputsLabel[1])
-		assert.Equal(t, "string", fhub.Functions["test"].InputsType[0])
-		assert.Equal(t, "string", fhub.Functions["test"].InputsType[1])
+		assert.Equal(t, reflect.String, fhub.Functions["test"].InputsType[0])
+		assert.Equal(t, reflect.String, fhub.Functions["test"].InputsType[1])
 		assert.Equal(t, "ok", fhub.Functions["test"].OutputsLabel[0])
-		assert.Equal(t, "bool", fhub.Functions["test"].OutputsType[0])
+		assert.Equal(t, reflect.Bool, fhub.Functions["test"].OutputsType[0])
 
 		ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1": "test2"}`))
 		assert.True(t, ok)

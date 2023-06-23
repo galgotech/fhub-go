@@ -18,6 +18,7 @@
 package model
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,24 +28,19 @@ var structFhubDefault = FHub{
 	Name:        "namespace",
 	Version:     "0.1",
 	SpecVersion: "0.1",
-	Packages: map[string]Package{
-		"test": {
-			Import: "fhub.dev/test",
-			Build: Build{
-				Local: &Local{
-					Source: "./",
-				},
-			},
+	Build: Build{
+		Local: &Local{
+			Source: "./",
 		},
 	},
 	Functions: map[string]Function{
 		"fuctionTest": {
-			Package:      "test",
-			Launch:       "Test",
+			// Package:      "test",
+			// Launch:       "Test",
 			InputsLabel:  []string{"arg1"},
-			InputsType:   []string{"string"},
+			InputsType:   []reflect.Kind{reflect.String},
 			OutputsLabel: []string{"out1"},
-			OutputsType:  []string{"string"},
+			OutputsType:  []reflect.Kind{reflect.String},
 		},
 	},
 }
@@ -73,27 +69,14 @@ func TestValidator(t *testing.T) {
 Key: 'FHub.Version' Error:Field validation for 'Version' failed on the 'required' tag
 Key: 'FHub.SpecVersion' Error:Field validation for 'SpecVersion' failed on the 'required' tag`,
 	}, {
-		Name: "package not exists",
-		Model: func() FHub {
-			f := structFhubDefault.DeepCopy()
-			ff := f.Functions["fuctionTest"]
-			ff.Package = "invalid"
-			f.Functions["fuctionTest"] = ff
-
-			return *f
-		}(),
-		Err: `Key: 'FHub.Functions[fuctionTest].package' Error:Field validation for 'package' failed on the 'exists' tag`,
-	}, {
 		Name: "build required",
 		Model: func() FHub {
 			f := structFhubDefault.DeepCopy()
-			pkg := f.Packages["test"]
-			pkg.Build.Local = nil
-			f.Packages["test"] = pkg
+			f.Build.Local = nil
 			return *f
 		}(),
-		Err: `Key: 'FHub.Packages[test].Build.Local' Error:Field validation for 'Local' failed on the 'required_without' tag
-Key: 'FHub.Packages[test].Build.Container' Error:Field validation for 'Container' failed on the 'required_without' tag`,
+		Err: `Key: 'FHub.Build.Local' Error:Field validation for 'Local' failed on the 'required_without' tag
+Key: 'FHub.Build.Container' Error:Field validation for 'Container' failed on the 'required_without' tag`,
 	}}
 
 	for _, tc := range testCases {

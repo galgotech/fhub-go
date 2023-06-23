@@ -31,7 +31,6 @@ func Validator(model FHub) error {
 	validate := validator.New()
 
 	validate.RegisterStructValidationCtx(fhubStructLevel, FHub{})
-	validate.RegisterStructValidationCtx(functionStructLevel, Function{})
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, ValidatorCtxValue, model)
@@ -41,25 +40,5 @@ func Validator(model FHub) error {
 }
 
 func fhubStructLevel(ctx context.Context, sl validator.StructLevel) {
-	// fhub, ok := sl.Current().Interface().(FHub)
-	// if !ok {
-	// 	return
-	// }
 
-}
-
-func functionStructLevel(ctx context.Context, sl validator.StructLevel) {
-	function, ok := sl.Current().Interface().(Function)
-	if !ok {
-		return
-	}
-
-	fhub, ok := ctx.Value(ValidatorCtxValue).(FHub)
-	if !ok {
-		return
-	}
-
-	if _, ok := fhub.Packages[function.Package]; !ok {
-		sl.ReportError(sl.Current(), "package", "Package", "exists", "")
-	}
 }
