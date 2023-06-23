@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	fhub "github.com/galgotech/fhub-runtime-go"
-	"github.com/galgotech/fhub-runtime-go/devenv/code/pkg"
+	fhub "github.com/galgotech/fhub-go"
+	"github.com/galgotech/fhub-go/devenv/code/pkg"
 )
 
 func main() {

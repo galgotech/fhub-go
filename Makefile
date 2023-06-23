@@ -6,17 +6,6 @@ include .bingo/Variables.mk
 
 .PHONY: all build-server run help
 
-
-##@ Building
-run: $(BRA) ## Build and run web server on filesystem changes.
-	$(BRA) run
-
-build: build-server ## build
-
-build-server: ## Build FHUB.
-	@echo "build server"
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 $(GO) build -o ./bin/fhub-runtime-go ./cmd
-
 build-code-test: ## Code test
 	@echo "build code test"
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GO) build -o ./bin/code-test devenv/code/cmd/main.go

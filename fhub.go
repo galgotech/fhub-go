@@ -1,4 +1,4 @@
-package plugin
+package fhub
 
 import (
 	"errors"
@@ -6,8 +6,9 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/galgotech/fhub-runtime-go/internal/plugin"
-	"github.com/galgotech/fhub-runtime-go/model"
+	"github.com/galgotech/fhub-go/internal/plugin"
+	"github.com/galgotech/fhub-go/internal/rest"
+	"github.com/galgotech/fhub-go/model"
 )
 
 var fhubPath string
@@ -39,6 +40,11 @@ func Run(functions any) error {
 		return err
 	}
 
-	plugin.Server("fhub", fhubModel, functionsValueOf)
-	return nil
+	fHubExec := &plugin.FHubExec{
+		Model:     fhubModel,
+		Functions: functionsValueOf,
+	}
+
+	return rest.Exec(fhubModel, fHubExec)
+
 }

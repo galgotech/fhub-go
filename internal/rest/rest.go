@@ -22,27 +22,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"path"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/galgotech/fhub-runtime-go/internal/plugin"
-	"github.com/galgotech/fhub-runtime-go/model"
+	"github.com/galgotech/fhub-go/internal/plugin"
+	"github.com/galgotech/fhub-go/model"
 )
 
-func Exec(root string) error {
+func Exec(fhubModel model.FHub, fhubExec *plugin.FHubExec) error {
 	r := gin.Default()
 
-	fhubPath := path.Join(root, "fhub.cue")
-	// pluginPath := filepath.Join(root, "plugin.so")
-
-	client, p, err := plugin.Client("fhub", "./bin/code-test")
-	if err != nil {
-		return err
-	}
-	defer client.Kill()
-
-	err = load(r, fhubPath, p)
+	err := load(r, fhubModel, fhubExec)
 	if err != nil {
 		return err
 	}
@@ -55,22 +46,10 @@ func Exec(root string) error {
 	return nil
 }
 
-func load(r *gin.Engine, path string, p plugin.FHub) error {
-	fhub, err := model.UnmarshalFile(path)
-	if err != nil {
-		return err
-	}
-
-	// env := map[string]string{}
-	// for _, name := range fhub.Env {
-	// 	if value, ok := os.LookupEnv(name); ok {
-	// 		env[name] = value
-	// 	}
-	// }
-
+func load(r *gin.Engine, fhub model.FHub, fhubExec *plugin.FHubExec) error {
 	for label, function := range fhub.Functions {
 		func(label string, function model.Function) {
-			path := fmt.Sprintf("%s/%s/%s", fhub.Version, fhub.Name, label)
+			path := fmt.Sprintf("%s/%s/%s", fhub.Version, fhub.Name, strings.ToLower(label))
 			r.POST(path, func(c *gin.Context) {
 				inputJson, err := ioutil.ReadAll(c.Request.Body)
 				if err != nil {
@@ -93,7 +72,7 @@ func load(r *gin.Engine, path string, p plugin.FHub) error {
 					return
 				}
 
-				output, err := p.Exec(label, input)
+				output, err := fhubExec.Exec(label, input)
 				if err != nil {
 					fmt.Printf("fail pluginExec: %s\n", err)
 					c.JSON(http.StatusInternalServerError, nil)
