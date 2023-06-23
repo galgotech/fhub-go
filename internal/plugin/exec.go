@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/galgotech/fhub-runtime-go/model"
+	"github.com/galgotech/fhub-go/model"
 )
 
 type FHubExec struct {
@@ -28,7 +28,11 @@ func (f *FHubExec) Exec(function string, input map[string]any) (map[string]any, 
 		}
 	}
 
-	outs := f.Functions.MethodByName(function).Call(args)
+	method := f.Functions.MethodByName(function)
+	if !method.IsValid() {
+		return nil, fmt.Errorf("function not implemented %q", function)
+	}
+	outs := method.Call(args)
 	outputLen := len(modelFunction.OutputsLabel)
 	if len(outs) != outputLen {
 		return nil, errors.New("invalid output")

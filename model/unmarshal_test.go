@@ -32,9 +32,6 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, "test", fhub.Name)
 		assert.Equal(t, "1.0", fhub.SpecVersion)
 		assert.Equal(t, "v1", fhub.Version)
-		assert.Equal(t, map[string]string{"const_name": "test"}, fhub.Constants)
-		assert.Equal(t, []string{"NAME"}, fhub.Env)
-		assert.Equal(t, []string{"fhub/internaltest.cue"}, fhub.Import)
 
 		assert.Equal(t, "./", fhub.Build.Local.Source)
 		assert.Equal(t, "https://fhub.dev/test", fhub.Serving.Http.Url)
@@ -64,7 +61,6 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, "test", fhub.Name)
 		assert.Equal(t, "1.0", fhub.SpecVersion)
 		assert.Equal(t, "v1", fhub.Version)
-		assert.Equal(t, []string{"fhub/internaltest.cue"}, fhub.Import)
 
 		assert.Equal(t, "Containerfile", fhub.Build.Container.ContainerFile)
 		assert.Equal(t, "/app", fhub.Build.Container.Source)

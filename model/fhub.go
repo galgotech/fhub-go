@@ -24,9 +24,6 @@ type FHub struct {
 	Version string `validate:"required"`
 	// FHub schema version
 	SpecVersion string `validate:"required"`
-	Constants   map[string]string
-	Env         []string
-	Import      []string
 	Build       Build
 	Serving     Serving
 	Functions   map[string]Function `validate:"min=1,dive"`
@@ -35,17 +32,6 @@ type FHub struct {
 func (in *FHub) DeepCopy() (out *FHub) {
 	out = new(FHub)
 	*out = *in
-
-	out.Env = make([]string, len(in.Env))
-	copy(out.Env, in.Env)
-
-	out.Import = make([]string, len(in.Import))
-	copy(out.Import, in.Env)
-
-	out.Constants = make(map[string]string, len(in.Constants))
-	for key, constant := range in.Constants {
-		out.Constants[key] = constant
-	}
 
 	out.Functions = make(map[string]Function, len(in.Functions))
 	for key, function := range in.Functions {
