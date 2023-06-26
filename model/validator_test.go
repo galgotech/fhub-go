@@ -18,7 +18,6 @@
 package model
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,12 +34,12 @@ var structFhubDefault = FHub{
 	},
 	Functions: map[string]Function{
 		"fuctionTest": {
-			// Package:      "test",
-			// Launch:       "Test",
-			InputsLabel:  []string{"arg1"},
-			InputsType:   []reflect.Kind{reflect.String},
-			OutputsLabel: []string{"out1"},
-			OutputsType:  []reflect.Kind{reflect.String},
+			Inputs: []string{
+				"arg1",
+			},
+			Outputs: []string{
+				"out1",
+			},
 		},
 	},
 }

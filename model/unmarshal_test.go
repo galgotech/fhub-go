@@ -18,7 +18,7 @@
 package model
 
 import (
-	"reflect"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,7 +27,10 @@ import (
 func TestUnmarshal(t *testing.T) {
 	t.Run("devenv/test.cue", func(t *testing.T) {
 		fhub, err := UnmarshalFile("../devenv/test.cue")
-		assert.NoError(t, err)
+		if !assert.NoError(t, err) {
+			fmt.Println(err.Error())
+			return
+		}
 
 		assert.Equal(t, "test", fhub.Name)
 		assert.Equal(t, "1.0", fhub.SpecVersion)
@@ -36,20 +39,20 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, "./", fhub.Build.Local.Source)
 		assert.Equal(t, "https://fhub.dev/test", fhub.Serving.Http.Url)
 
-		assert.Equal(t, "arg0", fhub.Functions["test"].InputsLabel[0])
-		assert.Equal(t, "arg1", fhub.Functions["test"].InputsLabel[1])
-		assert.Equal(t, reflect.String, fhub.Functions["test"].InputsType[0])
-		assert.Equal(t, reflect.String, fhub.Functions["test"].InputsType[1])
-		assert.Equal(t, "ok", fhub.Functions["test"].OutputsLabel[0])
-		assert.Equal(t, reflect.Bool, fhub.Functions["test"].OutputsType[0])
+		assert.Equal(t, "arg0", fhub.Functions["test"].Inputs[0])
+		assert.Equal(t, "arg1", fhub.Functions["test"].Inputs[1])
+		assert.Equal(t, "ok", fhub.Functions["test"].Outputs[0])
 
-		ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1": "test2"}`))
+		ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1":"1", "arg2": {"test1": "valor1", "test2": 1}, "arg3": ["a"]}`))
 		assert.True(t, ok)
 		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
 		assert.True(t, ok)
 
-		ok = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg2": "invalid"}`))
+		ok = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1":"1", "arg2": {"test1": "valor1", "test2": 1}, "arg3": [true]}`))
 		assert.False(t, ok)
+
+		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
+		assert.True(t, ok)
 		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": "invalid"}`))
 		assert.False(t, ok)
 	})
@@ -66,12 +69,9 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, "/app", fhub.Build.Container.Source)
 		assert.Equal(t, "https://fhub.dev/test", fhub.Serving.Http.Url)
 
-		assert.Equal(t, "arg0", fhub.Functions["test"].InputsLabel[0])
-		assert.Equal(t, "arg1", fhub.Functions["test"].InputsLabel[1])
-		assert.Equal(t, reflect.String, fhub.Functions["test"].InputsType[0])
-		assert.Equal(t, reflect.String, fhub.Functions["test"].InputsType[1])
-		assert.Equal(t, "ok", fhub.Functions["test"].OutputsLabel[0])
-		assert.Equal(t, reflect.Bool, fhub.Functions["test"].OutputsType[0])
+		assert.Equal(t, "arg0", fhub.Functions["test"].Inputs[0])
+		assert.Equal(t, "arg1", fhub.Functions["test"].Inputs[1])
+		assert.Equal(t, "ok", fhub.Functions["test"].Outputs[0])
 
 		ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1": "test2"}`))
 		assert.True(t, ok)

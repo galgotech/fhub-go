@@ -26,7 +26,9 @@ functions: {
     launch: "FuncTest"
     input: {
       arg0: string
-      arg1: string
+      arg1: string | int | null | bool | float | number | bytes | *""
+      arg2: {[string]: string | int}
+      arg3: [...(string | int)]
     }
     output: {
       ok: bool

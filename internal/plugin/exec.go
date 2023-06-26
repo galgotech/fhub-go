@@ -36,8 +36,8 @@ func (f *FHubExec) Exec(function string, input map[string]any) (map[string]any, 
 		return nil, errors.New("function not found")
 	}
 
-	args := make([]reflect.Value, len(modelFunction.InputsLabel))
-	for i, label := range modelFunction.InputsLabel {
+	args := make([]reflect.Value, len(modelFunction.Inputs))
+	for i, label := range modelFunction.Inputs {
 		if val, ok := input[label]; ok {
 			args[i] = reflect.ValueOf(val)
 		} else {
@@ -50,14 +50,14 @@ func (f *FHubExec) Exec(function string, input map[string]any) (map[string]any, 
 		return nil, fmt.Errorf("function not implemented %q", function)
 	}
 	outs := method.Call(args)
-	outputLen := len(modelFunction.OutputsLabel)
+	outputLen := len(modelFunction.Outputs)
 	if len(outs) != outputLen {
 		return nil, errors.New("invalid output")
 	}
 
 	output := make(map[string]any, outputLen)
 	for i, out := range outs {
-		output[modelFunction.OutputsLabel[i]] = out.Interface()
+		output[modelFunction.Outputs[i]] = out.Interface()
 	}
 
 	return output, nil

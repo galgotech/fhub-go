@@ -20,7 +20,6 @@ package model
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"reflect"
 
 	"cuelang.org/go/cue"
@@ -31,22 +30,21 @@ type Function struct {
 	inputValue  cue.Value `fhub:"input" fhub-unmarshal:"true"`
 	outputValue cue.Value `fhub:"output" fhub-unmarshal:"true"`
 
-	InputsLabel  []string       `validate:"min=1"`
-	InputsType   []reflect.Kind `validate:"min=1"`
-	OutputsLabel []string       `validate:"min=1"`
-	OutputsType  []reflect.Kind `validate:"min=1"`
+	Inputs  []string `validate:"min=1"`
+	Outputs []string `validate:"min=1"`
 }
 
 func (f *Function) Unmarshal(field string, value cue.Value) (err error) {
 	if field == "input" {
 		f.inputValue = value
-		f.InputsLabel, f.InputsType, err = type_struct(f.inputValue)
+		f.Inputs, err = type_struct(f.inputValue)
 		if err != nil {
 			return err
 		}
+
 	} else if field == "output" {
 		f.outputValue = value
-		f.OutputsLabel, f.OutputsType, err = type_struct(f.outputValue)
+		f.Outputs, err = type_struct(f.outputValue)
 		if err != nil {
 			return err
 		}
@@ -87,30 +85,32 @@ func (f *Function) validate(data []byte, value cue.Value) bool {
 	return err == nil
 }
 
-func type_struct(value cue.Value) ([]string, []reflect.Kind, error) {
+type Parameter struct {
+	Label   string
+	cueType cue.Kind
+}
+
+func (f *Parameter) Type(k reflect.Kind) bool {
+	switch k {
+	case reflect.String:
+		return f.cueType.IsAnyOf(cue.StringKind)
+	case reflect.Bool:
+		return f.cueType.IsAnyOf(cue.StringKind)
+	}
+
+	return false
+}
+
+func type_struct(value cue.Value) ([]string, error) {
 	fields, err := value.Fields()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	labels := []string{}
-	values := []reflect.Kind{}
+	parameters := []string{}
 	for fields.Next() {
-		fieldValue := fields.Value()
-		label := fields.Label()
-		labels = append(labels, label)
-
-		switch fieldValue.IncompleteKind() {
-		case cue.StringKind:
-			values = append(values, reflect.String)
-		case cue.IntKind:
-			values = append(values, reflect.Int)
-		case cue.BoolKind:
-			values = append(values, reflect.Bool)
-		default:
-			return nil, nil, fmt.Errorf("invalid type input %s", fieldValue.IncompleteKind())
-		}
+		parameters = append(parameters, fields.Label())
 	}
 
-	return labels, values, nil
+	return parameters, nil
 }
