@@ -29,6 +29,7 @@ functions: {
       arg1: string | int | null | bool | float | number | bytes | *""
       arg2: {[string]: string | int}
       arg3: [...(string | int)]
+      arg4: float
     }
     output: {
       ok: bool
