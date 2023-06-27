@@ -43,18 +43,19 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, "arg1", fhub.Functions["test"].Inputs[1])
 		assert.Equal(t, "ok", fhub.Functions["test"].Outputs[0])
 
-		ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1":"1", "arg2": {"test1": "valor1", "test2": 1}, "arg3": ["a"]}`))
-		assert.True(t, ok)
-		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
-		assert.True(t, ok)
+		err = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1":"1", "arg2": {"test1": "valor1", "test2": 1}, "arg3": ["a"], "arg4": 1.0}`))
+		assert.NoError(t, err)
+		err = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1":"1", "arg2": {"test1": "valor1", "test2": 1}, "arg3": ["a"], "arg4": true}`))
+		if assert.Error(t, err) {
+			assert.Equal(t, "functions.test.input.arg4: conflicting values float and true (mismatched types float and bool)", err.Error())
+		}
 
-		ok = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1":"1", "arg2": {"test1": "valor1", "test2": 1}, "arg3": [true]}`))
-		assert.False(t, ok)
-
-		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
-		assert.True(t, ok)
-		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": "invalid"}`))
-		assert.False(t, ok)
+		err = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
+		assert.NoError(t, err)
+		err = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": "invalid"}`))
+		if assert.Error(t, err) {
+			assert.Equal(t, "functions.test.output.ok: conflicting values bool and \"invalid\" (mismatched types bool and string)", err.Error())
+		}
 	})
 
 	t.Run("devenv/test_containerfile.cue", func(t *testing.T) {
@@ -73,14 +74,18 @@ func TestUnmarshal(t *testing.T) {
 		assert.Equal(t, "arg1", fhub.Functions["test"].Inputs[1])
 		assert.Equal(t, "ok", fhub.Functions["test"].Outputs[0])
 
-		ok := fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1": "test2"}`))
-		assert.True(t, ok)
-		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
-		assert.True(t, ok)
+		err = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg1": "test2"}`))
+		assert.NoError(t, err)
+		err = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": true}`))
+		assert.NoError(t, err)
 
-		ok = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg2": "invalid"}`))
-		assert.False(t, ok)
-		ok = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": "invalid"}`))
-		assert.False(t, ok)
+		err = fhub.Functions["test"].ValidateInput([]byte(`{"arg0": "test", "arg2": "invalid"}`))
+		if assert.Error(t, err) {
+			assert.Equal(t, "functions.test.input.arg1: incomplete value string", err.Error())
+		}
+		err = fhub.Functions["test"].ValidateOutput([]byte(`{"ok": "invalid"}`))
+		if assert.Error(t, err) {
+			assert.Equal(t, "functions.test.output.ok: conflicting values bool and \"invalid\" (mismatched types bool and string)", err.Error())
+		}
 	})
 }

@@ -58,14 +58,13 @@ func load(r *gin.Engine, fhub model.FHub, fhubExec *plugin.FHubExec) error {
 					return
 				}
 
-				if ok := function.ValidateInput(inputJson); !ok {
-					fmt.Printf("fail validate input\n")
+				if err := function.ValidateInput(inputJson); err != nil {
+					fmt.Printf("fail validate input %q\n", err)
 					c.JSON(http.StatusBadRequest, nil)
 					return
 				}
 
-				input := map[string]any{}
-				err = json.Unmarshal(inputJson, &input)
+				input, err := function.UnmarshalInput(inputJson)
 				if err != nil {
 					fmt.Printf("fail unmarshal input: %s\n", err)
 					c.JSON(http.StatusInternalServerError, nil)
@@ -74,25 +73,20 @@ func load(r *gin.Engine, fhub model.FHub, fhubExec *plugin.FHubExec) error {
 
 				output, err := fhubExec.Exec(label, input)
 				if err != nil {
-					fmt.Printf("fail pluginExec: %s\n", err)
-					c.JSON(http.StatusInternalServerError, nil)
-					return
-				}
-				if output == nil {
-					fmt.Printf("fail pluginExec\n")
+					fmt.Printf("fail pluginExec: %q\n", err)
 					c.JSON(http.StatusInternalServerError, nil)
 					return
 				}
 
 				outputJson, err := json.Marshal(output)
 				if err != nil {
-					fmt.Printf("fail marshal input: %s\n", err)
+					fmt.Printf("fail marshal input: %q\n", err)
 					c.JSON(http.StatusBadRequest, nil)
 					return
 				}
 
-				if ok := function.ValidateOutput(outputJson); !ok {
-					fmt.Printf("fail validate output\n")
+				if err := function.ValidateOutput(outputJson); err != nil {
+					fmt.Printf("fail validate output %q\n", err)
 					c.JSON(http.StatusBadRequest, nil)
 					return
 				}

@@ -20,6 +20,7 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 
 	"cuelang.org/go/cue"
@@ -48,6 +49,7 @@ func (f *Function) Unmarshal(field string, value cue.Value) (err error) {
 		if err != nil {
 			return err
 		}
+
 	} else {
 		return errors.New("invalid field")
 	}
@@ -55,34 +57,20 @@ func (f *Function) Unmarshal(field string, value cue.Value) (err error) {
 	return nil
 }
 
-func (f Function) ValidateInput(data []byte) bool {
-	return f.validate(data, f.inputValue)
+func (f Function) UnmarshalInput(data []byte) (map[string]any, error) {
+	return unmarshalToMap(data, f.inputValue)
 }
 
-func (f Function) ValidateOutput(data []byte) bool {
-	return f.validate(data, f.outputValue)
+func (f Function) UnmarshalOutput(data []byte) (map[string]any, error) {
+	return unmarshalToMap(data, f.outputValue)
 }
 
-func (f *Function) validate(data []byte, value cue.Value) bool {
-	valid := json.Valid(data)
-	if !valid {
-		return false
-	}
+func (f Function) ValidateInput(data []byte) error {
+	return validate(data, f.inputValue)
+}
 
-	dataValue := cuecontext.New().CompileBytes(data)
-	valueUnify := value.UnifyAccept(dataValue, value)
-	if valueUnify.Err() != nil {
-		return false
-	}
-
-	err := valueUnify.Validate(
-		cue.Attributes(true),
-		cue.Optional(true),
-		cue.Hidden(true),
-		cue.Concrete(true),
-	)
-
-	return err == nil
+func (f Function) ValidateOutput(data []byte) error {
+	return validate(data, f.outputValue)
 }
 
 type Parameter struct {
@@ -113,4 +101,54 @@ func type_struct(value cue.Value) ([]string, error) {
 	}
 
 	return parameters, nil
+}
+
+func unmarshalToMap(data []byte, value cue.Value) (map[string]any, error) {
+	valueUnify, err := unifyDataAndValue(data, value)
+	if err != nil {
+		return nil, fmt.Errorf("error in cue value unify: %s", err)
+	}
+
+	dataMap := map[string]any{}
+	fields, err := valueUnify.Fields()
+	if err != nil {
+		return nil, err
+	}
+
+	for fields.Next() {
+		var value any
+		fields.Value().Decode(&value)
+		dataMap[fields.Label()] = value
+	}
+
+	return dataMap, nil
+}
+
+func validate(data []byte, value cue.Value) error {
+	valueUnify, err := unifyDataAndValue(data, value)
+	if err != nil {
+		return err
+	}
+
+	return valueUnify.Validate(
+		cue.Attributes(true),
+		cue.Optional(true),
+		cue.Hidden(true),
+		cue.Concrete(true),
+	)
+}
+
+func unifyDataAndValue(data []byte, value cue.Value) (cue.Value, error) {
+	valid := json.Valid(data)
+	if !valid {
+		return value, nil
+	}
+
+	dataValue := cuecontext.New().CompileBytes(data)
+	valueUnify := value.UnifyAccept(dataValue, value)
+	if valueUnify.Err() != nil {
+		return value, valueUnify.Err()
+	}
+
+	return valueUnify, nil
 }
